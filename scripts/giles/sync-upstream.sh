@@ -36,5 +36,7 @@ else
   note="Integration needs conflict resolution. Upstream commit: $(git rev-parse upstream/main). The PR records affected files; no engine update has been applied."
 fi
 git push origin "$branch"
-printf '%s\n' "$note" > /tmp/giles-sync-pr.md
-gh pr create --repo davyburgevin/giles --base main --head "$branch" "${draft[@]}" --title "Sync NousResearch $(git rev-parse --short=12 upstream/main)" --body-file /tmp/giles-sync-pr.md
+body_file=$(mktemp)
+trap 'rm -f "$body_file"' EXIT
+printf '%s\n' "$note" > "$body_file"
+gh pr create --repo davyburgevin/giles --base main --head "$branch" "${draft[@]}" --title "Sync NousResearch $(git rev-parse --short=12 upstream/main)" --body-file "$body_file"

@@ -7,15 +7,12 @@ import os
 import secrets
 import shlex
 import subprocess
-
 ROOT = Path(__file__).resolve().parents[2]
 
-
 def run(*args):
-    result = subprocess.run(args, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, check=False)
+    result = subprocess.run(args, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, check=False, timeout=120)
     if result.returncode:
         raise RuntimeError(f'{Path(args[0]).name} failed: {result.stderr.decode().strip()}')
-
 
 def main():
     parser = argparse.ArgumentParser()
@@ -23,51 +20,50 @@ def main():
     parser.add_argument('--github', action='store_true')
     args = parser.parse_args()
     folder = ROOT / '.giles-signing'
-    folder.mkdir(mode=0o700, exist_ok=True)
-    os.chmod(folder, 0o700)
+    folder.mkdir(mode=448, exist_ok=True)
+    os.chmod(folder, 448)
     credentials = folder / 'credentials.json'
-    if args.create and not credentials.exists():
+    if args.create and (not credentials.exists()):
         config = folder / 'openssl.cnf'
-        config.write_text('[req]\ndistinguished_name=dn\nx509_extensions=code\nprompt=no\n[dn]\nCN=Giles Personal Code Signing\nO=Davy Burgevin\n[code]\nbasicConstraints=critical,CA:FALSE\nkeyUsage=critical,digitalSignature\nextendedKeyUsage=critical,codeSigning\nsubjectKeyIdentifier=hash\n')
+        config.write_text('[req]\ndistinguished_name=dn\nx509_extensions=code\nprompt=no\n[dn]\nCN=Giles Personal Code Signing\nO=Davy Burgevin\n[code]\nbasicConstraints=critical,CA:FALSE\nkeyUsage=critical,digitalSignature\nextendedKeyUsage=critical,codeSigning\nsubjectKeyIdentifier=hash\n', encoding='utf-8')
         data = {'password': secrets.token_urlsafe(32), 'keychainPassword': secrets.token_urlsafe(32)}
-        run('/usr/bin/openssl', 'req', '-new', '-x509', '-newkey', 'rsa:3072', '-nodes', '-days', '3650', '-config', str(config), '-keyout', str(folder/'key.pem'), '-out', str(folder/'certificate.pem'))
+        run('/usr/bin/openssl', 'req', '-new', '-x509', '-newkey', 'rsa:3072', '-nodes', '-days', '3650', '-config', str(config), '-keyout', str(folder / 'key.pem'), '-out', str(folder / 'certificate.pem'))
         env = dict(os.environ, GILES_P12_PASSWORD=data['password'])
-        subprocess.run(['/usr/bin/openssl', 'pkcs12', '-export', '-inkey', str(folder/'key.pem'), '-in', str(folder/'certificate.pem'), '-name', 'Giles Personal Code Signing', '-out', str(folder/'giles.p12'), '-passout', 'env:GILES_P12_PASSWORD'], env=env, check=True, capture_output=True)
-        credentials.write_text(json.dumps(data))
+        subprocess.run(['/usr/bin/openssl', 'pkcs12', '-export', '-inkey', str(folder / 'key.pem'), '-in', str(folder / 'certificate.pem'), '-name', 'Giles Personal Code Signing', '-out', str(folder / 'giles.p12'), '-passout', 'env:GILES_P12_PASSWORD'], env=env, check=True, capture_output=True, timeout=120)
+        credentials.write_text(json.dumps(data), encoding='utf-8')
     if os.environ.get('GILES_CERTIFICATE_P12'):
-        (folder/'giles.p12').write_bytes(base64.b64decode(os.environ['GILES_CERTIFICATE_P12']))
-        credentials.write_text(json.dumps({'password':os.environ['GILES_CERTIFICATE_PASSWORD'], 'keychainPassword':secrets.token_urlsafe(32)}))
-        run('/usr/bin/openssl', 'pkcs12', '-in', str(folder/'giles.p12'), '-clcerts', '-nokeys', '-passin', 'pass:'+os.environ['GILES_CERTIFICATE_PASSWORD'], '-out', str(folder/'certificate.pem'))
-    data = json.loads(credentials.read_text())
-    keychain = folder/'giles.keychain-db'
+        (folder / 'giles.p12').write_bytes(base64.b64decode(os.environ['GILES_CERTIFICATE_P12']))
+        credentials.write_text(json.dumps({'password': os.environ['GILES_CERTIFICATE_PASSWORD'], 'keychainPassword': secrets.token_urlsafe(32)}), encoding='utf-8')
+        run('/usr/bin/openssl', 'pkcs12', '-in', str(folder / 'giles.p12'), '-clcerts', '-nokeys', '-passin', 'pass:' + os.environ['GILES_CERTIFICATE_PASSWORD'], '-out', str(folder / 'certificate.pem'))
+    data = json.loads(credentials.read_text(encoding='utf-8'))
+    keychain = folder / 'giles.keychain-db'
     if not keychain.exists():
         run('/usr/bin/security', 'create-keychain', '-p', data['keychainPassword'], str(keychain))
     run('/usr/bin/security', 'unlock-keychain', '-p', data['keychainPassword'], str(keychain))
     run('/usr/bin/security', 'set-keychain-settings', '-lut', '21600', str(keychain))
-    certificate = subprocess.run(['/usr/bin/security', 'find-certificate', '-c', 'Giles Personal Code Signing', str(keychain)], capture_output=True, check=False)
+    certificate = subprocess.run(['/usr/bin/security', 'find-certificate', '-c', 'Giles Personal Code Signing', str(keychain)], capture_output=True, check=False, timeout=120)
     if certificate.returncode:
-        run('/usr/bin/security', 'import', str(folder/'giles.p12'), '-k', str(keychain), '-P', data['password'], '-T', '/usr/bin/codesign', '-T', '/usr/bin/security')
+        run('/usr/bin/security', 'import', str(folder / 'giles.p12'), '-k', str(keychain), '-P', data['password'], '-T', '/usr/bin/codesign', '-T', '/usr/bin/security')
     run('/usr/bin/security', 'set-key-partition-list', '-S', 'apple-tool:,apple:,codesign:', '-s', '-k', data['keychainPassword'], str(keychain))
     if os.environ.get('GITHUB_ACTIONS') == 'true':
-        run('sudo', '/usr/bin/security', 'add-trusted-cert', '-d', '-r', 'trustRoot', '-p', 'codeSign', '-k', str(keychain), str(folder/'certificate.pem'))
+        run('sudo', '/usr/bin/security', 'add-trusted-cert', '-d', '-r', 'trustRoot', '-p', 'codeSign', '-k', str(keychain), str(folder / 'certificate.pem'))
     else:
-        run('/usr/bin/security', 'add-trusted-cert', '-r', 'trustRoot', '-p', 'codeSign', '-k', str(keychain), str(folder/'certificate.pem'))
-    current = shlex.split(subprocess.check_output(['/usr/bin/security', 'list-keychains', '-d', 'user'], text=True))
+        run('/usr/bin/security', 'add-trusted-cert', '-r', 'trustRoot', '-p', 'codeSign', '-k', str(keychain), str(folder / 'certificate.pem'))
+    current = shlex.split(subprocess.check_output(['/usr/bin/security', 'list-keychains', '-d', 'user'], text=True, timeout=120, encoding='utf-8'))
     if str(keychain) not in current:
         run('/usr/bin/security', 'list-keychains', '-d', 'user', '-s', *current, str(keychain))
-    fingerprint = subprocess.check_output(['/usr/bin/openssl','x509','-in',str(folder/'certificate.pem'),'-noout','-fingerprint','-sha1'],text=True).strip().split('=')[1].replace(':','')
-    environment = {'GILES_SIGNING_KEYCHAIN':str(keychain), 'GILES_SIGNING_FINGERPRINT':fingerprint}
-    (folder/'environment.json').write_text(json.dumps(environment))
+    fingerprint = subprocess.check_output(['/usr/bin/openssl', 'x509', '-in', str(folder / 'certificate.pem'), '-noout', '-fingerprint', '-sha1'], text=True, timeout=120, encoding='utf-8').strip().split('=')[1].replace(':', '')
+    environment = {'GILES_SIGNING_KEYCHAIN': str(keychain), 'GILES_SIGNING_FINGERPRINT': fingerprint}
+    (folder / 'environment.json').write_text(json.dumps(environment), encoding='utf-8')
     for p in folder.iterdir():
-        if p.is_file():os.chmod(p,0o600)
+        if p.is_file():
+            os.chmod(p, 384)
     if os.environ.get('GITHUB_ENV'):
-        with open(os.environ['GITHUB_ENV'],'a') as output:
-            output.writelines(f'{k}={v}\n' for k,v in environment.items())
+        with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as output:
+            output.writelines((f'{k}={v}\n' for k, v in environment.items()))
     if args.github:
-        for name,value in {'GILES_CERTIFICATE_P12':base64.b64encode((folder/'giles.p12').read_bytes()).decode(),'GILES_CERTIFICATE_PASSWORD':data['password']}.items():
-            subprocess.run(['gh','secret','set',name,'--repo','davyburgevin/giles'],input=value,text=True,check=True,stdout=subprocess.DEVNULL)
+        for name, value in {'GILES_CERTIFICATE_P12': base64.b64encode((folder / 'giles.p12').read_bytes()).decode(), 'GILES_CERTIFICATE_PASSWORD': data['password']}.items():
+            subprocess.run(['gh', 'secret', 'set', name, '--repo', 'davyburgevin/giles'], input=value, text=True, check=True, stdout=subprocess.DEVNULL, timeout=120, encoding='utf-8')
     print('Giles personal signing identity is ready; private material stays ignored.')
-
-
 if __name__ == '__main__':
     main()
