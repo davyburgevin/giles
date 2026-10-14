@@ -1,7 +1,7 @@
 """Render the independent Giles monogram with Pillow, without external artwork."""
 from pathlib import Path
 import argparse
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 
 
 def main():
@@ -24,7 +24,7 @@ def main():
     # The build renderer copies prepared public images independently of assets.
     public = out / 'apps/desktop/public'
     public.mkdir(parents=True, exist_ok=True)
-    for name in ('nous-girl.png', 'nous-girl-dark.png', 'favicon.png'):
+    for name in ('nous-girl.png', 'nous-girl-dark.png', 'favicon.png', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'):
         image.save(public / name)
 
 

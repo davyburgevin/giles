@@ -34,7 +34,8 @@ module.exports = async function signGiles(options) {
         const head = Buffer.alloc(4)
         let count
         try { count = fs.readSync(fd, head, 0, 4, 0) } finally { fs.closeSync(fd) }
-        if (count === 4 && magics.has(head.readUInt32BE(0))) sign(file)
+        const framework = file.match(/([^/]+)\.framework\//)?.[1]
+        if (count === 4 && magics.has(head.readUInt32BE(0)) && item.name !== framework) sign(file)
       }
     }
   }
