@@ -20,7 +20,7 @@ module.exports = async function signGiles(options) {
   const sign = (file, outer = false) => {
     const args = ['--force', '--sign', fingerprint, '--keychain', keychain,
       '--timestamp=none', '--options', 'runtime', '--entitlements', outer ? entitlements : inherit]
-    if (outer) args.push('--requirements', `designated => identifier "fr.davyburgevin.giles" and anchor = H"${fingerprint}"`)
+    if (outer) args.push('--requirements', `=designated => identifier "fr.davyburgevin.giles" and anchor = H"${fingerprint}"`)
     execFileSync('/usr/bin/codesign', [...args, file], { stdio: 'inherit' })
   }
   const magics = new Set([0xfeedface, 0xcefaedfe, 0xfeedfacf, 0xcffaedfe, 0xcafebabe, 0xbebafeca])

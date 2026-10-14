@@ -25,6 +25,10 @@ if git merge --no-edit upstream/main; then
   fi
   draft=()
   note='Upstream was merged into this proposal. Review and pass Giles checks before merging.'
+  if ! (python3 scripts/giles/check.py && node --test scripts/giles/contracts.test.mjs); then
+    draft=(--draft)
+    note='Upstream integration failed Giles product checks. Resolve the failing checks before merging this draft.'
+  fi
 else
   # Preserve conflicts as a reviewable proposal; main and releases stay intact.
   conflicts=$(git diff --name-only --diff-filter=U)
