@@ -325,3 +325,7 @@ native/fts5_cjk/*.so
 /pm/.lock.json.lock
 
 apps/desktop/.dist-build*
+
+# Giles signing material and private local state
+.giles-signing/
+.giles-test-home/

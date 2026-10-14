@@ -34,7 +34,7 @@ export function createChannelMacStrategy(deps: MacClientDeps, target: ChannelTar
 
 export function createMacStrategy(deps: MacClientDeps): MacStrategy {
   const legacy = feedContract.darwinFeed(deps.channel, deps.light)
-  const channel = deps.feed?.channel ?? legacy.channel
+  const channel = deps.feed?.channel ?? 'latest'
   const updater = new electronUpdater.MacUpdater()
 
   if (deps.feed) {
@@ -54,6 +54,8 @@ export function createMacStrategy(deps: MacClientDeps): MacStrategy {
   // Setting channel enables downgrades in electron-updater. This app never does.
   updater.allowDowngrade = false
   updater.on('error', error => deps.log(`macOS updater: ${error.message}`))
+
+  updater.setFeedURL({ provider: 'github', owner: 'davyburgevin', repo: 'giles', channel: 'latest' })
 
   if (deps.feed) {
     const base = channelPublicBase(deps.feedBaseUrl)

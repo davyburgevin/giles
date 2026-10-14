@@ -29,7 +29,7 @@ export function platformDefaultHermesHome(home, env = process.env, platform = pr
     const base = (env.LOCALAPPDATA || '').trim() || path.win32.join(home, 'AppData', 'Local')
     return path.win32.join(base, 'hermes') + suffix
   }
-  return path.posix.join(home, '.hermes') + suffix
+  return path.posix.join(home, '.giles') + suffix
 }
 
 export function resolveDesktopUserData(defaultPath, env = process.env) {

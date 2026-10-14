@@ -1,0 +1,15 @@
+name: Giles · Checks
+on:
+  pull_request:
+  push:
+    branches: [main, 'giles/**']
+permissions:
+  contents: read
+jobs:
+  inputs:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a
+      - run: python3 scripts/giles/check.py
+      - run: node --test scripts/giles/contracts.test.mjs
+      - run: bash -n scripts/giles/sync-upstream.sh

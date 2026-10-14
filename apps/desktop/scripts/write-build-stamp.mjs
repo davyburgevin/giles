@@ -230,7 +230,7 @@ export function buildStampPayload(stamp, env = process.env, platform = process.p
     branch: commitBuild || channelBuild ? null : stamp.branch,
     builtAt: new Date().toISOString(),
     dirty: stamp.dirty,
-    source: channelBuild ? 'channel-build' : commitBuild ? 'commit-build' : stamp.source,
+    source: channelBuild ? 'channel-build' : commitBuild ? 'ci' : stamp.source,
     commitDate: stamp.commitDate ?? null,
     baseVersion: channelBuild?.sourceVersion ?? stamp.baseVersion ?? version?.split('-')[0] ?? null,
     displayVersion: channelBuild
@@ -266,7 +266,7 @@ export function buildStampPayload(stamp, env = process.env, platform = process.p
     payload: variant === "store" ? "bundled" : variant || "bootstrap",
     distribution: "desktop-app",
 
-    updateMechanism: commitBuild ? 'external' : updateMechanism,
+    updateMechanism,
     tag: channelBuild?.receiverCandidate ? channelBuild.releaseTag : env.HERMES_PAYLOAD_TAG || null,
     ...(bundleEnv ? { bundleEnv } : {}),
     ...(bundled ? { runtime: payload.runtime } : {})

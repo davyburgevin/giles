@@ -57,7 +57,7 @@ const channelRequest = channelBuildRequest()
 
 /** @typedef {import("app-builder-lib").Configuration} Configuration */
 
-const [owner, repo] = (process.env.GITHUB_REPOSITORY || 'NousResearch/hermes-agent').split('/')
+const [owner, repo] = ('davyburgevin/giles').split('/')
 if (!owner || !repo) {
   throw new Error(`invalid GITHUB_REPOSITORY ${process.env.GITHUB_REPOSITORY}`)
 }
@@ -78,7 +78,7 @@ module.exports = {
   protocols: [
     {
       name: `${displayName} Protocol`,
-      schemes: ['hermes']
+      schemes: ['giles']
     }
   ],
   // A store build is archived, never served to a feed — prefix its artifact
@@ -123,7 +123,7 @@ module.exports = {
   // rewritten file (#105629). afterPack keeps the signing/payload work.
   afterExtract: 'scripts/after-extract.mjs',
   afterPack: 'scripts/after-pack.mjs',
-  ...(process.platform === 'darwin' ? { afterSign: 'scripts/notarize.mjs' } : {}),
+  
   extraResources: [
     {
       from: 'build/install-stamp.json',
@@ -147,17 +147,12 @@ module.exports = {
     // electron-builder compiles `.icon` with actool >= 26 only, so hosts
     // without Xcode 26 fall back to the .icns alone (see scripts/mac-icon.cjs);
     // after-pack.mjs restores our full-resolution .icns either way.
-    icon: macIconResource(__dirname),
+    icon: 'assets/icon.icns',
     // The afterSign hook owns notarization, including keychain-profile builds.
     notarize: false,
     // The packaged client reads this generated app-update.yml by default.
-    publish: channelRequest?.receiverCandidate
-      ? [{ provider: 'generic', url: `${channelRequest.publicBase}/releases/darwin/stable/`, channel: 'stable' }]
-      : channelRequest
-      ? [{ provider: 'generic', url: `${channelRequest.publicBase}/releases/channel-builds/${channelRequest.buildId}/darwin/`, channel: 'latest' }]
-      : publicUrl && channel && macFeed
-      ? [{ provider: 'generic', url: `${publicUrl}/${macFeed.directory}/`, channel: macFeed.channel }]
-      : null,
+    publish: [{ provider: 'github', owner: 'davyburgevin', repo: 'giles', channel: 'latest' }],
+    identity: null,
     category: 'public.app-category.developer-tools',
     extendInfo: {
       CFBundleDisplayName: displayName,
@@ -177,7 +172,9 @@ module.exports = {
       NSContactsUsageDescription: `${displayName} uses Contacts access when you ask it to read or update your address book.`,
       NSAppleEventsUsageDescription: `${displayName} uses Apple Events to automate apps you explicitly ask it to control.`
     },
-    target: ['dmg', 'zip'],
+    target: [{ target: 'dmg', arch: ['arm64'] }, { target: 'zip', arch: ['arm64'] }],
+    sign: require('./scripts/giles-sign.cjs'),
+    /* Upstream Developer ID signing policy retained as reference.
     sign: createMacSigner({
       entitlements: path.join(__dirname, 'electron/entitlements.mac.plist'),
       entitlementsInherit: path.join(__dirname, 'electron/entitlements.mac.inherit.plist'),
@@ -192,7 +189,7 @@ module.exports = {
           return true
         }
       }
-    })
+    }) */
   },
   dmg: {
     // Avoid the failing optional APFS shrink pass; keep compressed conversion.
@@ -203,13 +200,13 @@ module.exports = {
     // paste onto the stock removable-drive icon). It lives in packaging/ with
     // the background so the `files` whitelist keeps it out of the app bundle.
     icon: 'packaging/dmg-volume.icns',
-    title: 'Hermes Agent Installer',
+    title: 'Giles Installer',
     // A prebuilt .tiff on purpose, not a PNG plus a @2x sibling: dmg-builder's
     // PNG path runs `tiffutil -cathidpicheck`, which on macOS 26 rewrites both
     // frames to 72 dpi and silently drops the 2x representation. A .tiff is
     // handed to dmgbuild untouched (dmg-builder/dist/dmgUtil.js), and living
     // outside assets/ keeps it out of the app bundle via the `files` whitelist.
-    background: 'packaging/nous-dmg-2b.tiff',
+    backgroundColor: '#142832',
     iconSize: 96,
     iconTextSize: 11,
     window: {

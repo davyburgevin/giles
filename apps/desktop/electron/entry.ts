@@ -30,6 +30,14 @@ function configuredElectronFlags(env: NodeJS.ProcessEnv): string[] {
   }
 }
 
+if (process.platform !== 'darwin' || process.arch !== 'arm64') {
+  throw new Error('Giles supports macOS Apple Silicon only.')
+}
+// Set before main or any Python process resolves state. Inherited Hermes
+// variables must never redirect Giles into the original application's data.
+process.env.HERMES_HOME = process.env.GILES_HOME || path.join(os.homedir(), '.giles')
+process.env.HERMES_RUNTIME_DIR = path.join(process.env.HERMES_HOME, 'tools')
+
 const linux = process.platform === 'linux'
 const electronFlags = linux ? configuredElectronFlags(process.env) : []
 
