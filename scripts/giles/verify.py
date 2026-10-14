@@ -39,11 +39,12 @@ with tempfile.TemporaryDirectory(prefix='giles-smoke-') as folder:
             deadline = time.monotonic() + 60
             match = None
             while time.monotonic() < deadline and process.poll() is None:
-                match = re.search('HERMES_BACKEND_READY port=(\\d+)', log.read_text(encoding='utf-8-sig'))
+                match = re.search(r'HERMES_BACKEND_READY port=(\d+)', log.read_text(encoding='utf-8-sig'))
                 if match:
                     break
                 time.sleep(0.25)
-            assert match, log.read_text(encoding='utf-8-sig')
+            if not match:
+                raise RuntimeError(log.read_text(encoding='utf-8-sig'))
             print('Original Python backend started successfully on an isolated ephemeral port.')
         finally:
             process.terminate()
