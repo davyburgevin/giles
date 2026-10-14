@@ -30,7 +30,7 @@ try {
   await signGiles({ app: update })
   const descriptor = spawnSync('/usr/bin/codesign', ['-d', '-r-', installed], { encoding: 'utf8', timeout: 60000 })
   assert.equal(descriptor.status, 0)
-  const requirement = /designated => (.+)/.exec(descriptor.stderr)?.[1]
+  const requirement = /designated => (.+)/.exec(descriptor.stdout + '\n' + descriptor.stderr)?.[1]
   assert(requirement, descriptor.stderr)
   execFileSync('/usr/bin/codesign', ['--verify', '--strict', '-R', `=${requirement}`, update], { timeout: 60000 })
   execFileSync('/usr/bin/codesign', ['--force', '--sign', '-', foreign], { timeout: 60000, stdio: 'pipe' })
