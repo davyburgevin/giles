@@ -29,7 +29,7 @@ assert launcher.name == 'giles'
 with tempfile.TemporaryDirectory(prefix='giles-smoke-') as folder:
     environment = dict(os.environ, HERMES_HOME=folder, HERMES_RUNTIME_DIR=str(Path(folder)/'tools'),
                        HERMES_DESKTOP='1', HERMES_SERVE_HEADLESS='1')
-    result = subprocess.run([str(launcher), '--help'], env=environment, capture_output=True, text=True, timeout=60)
+    result = subprocess.run([str(launcher), '--help'], env=environment, capture_output=True, text=True, timeout=60, check=False)
     assert result.returncode == 0, result.stderr
     assert 'serve' in result.stdout
     log = Path(folder)/'backend.log'
@@ -38,7 +38,6 @@ with tempfile.TemporaryDirectory(prefix='giles-smoke-') as folder:
         try:
             import re
             import time
-            import urllib.request
             deadline = time.monotonic() + 60
             match = None
             while time.monotonic() < deadline and process.poll() is None:

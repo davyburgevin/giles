@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def run(*args):
-    result = subprocess.run(args, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+    result = subprocess.run(args, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, check=False)
     if result.returncode:
         raise RuntimeError(f'{Path(args[0]).name} failed: {result.stderr.decode().strip()}')
 
@@ -43,10 +43,12 @@ def main():
         run('/usr/bin/security', 'create-keychain', '-p', data['keychainPassword'], str(keychain))
     run('/usr/bin/security', 'unlock-keychain', '-p', data['keychainPassword'], str(keychain))
     run('/usr/bin/security', 'set-keychain-settings', '-lut', '21600', str(keychain))
-    certificate = subprocess.run(['/usr/bin/security', 'find-certificate', '-c', 'Giles Personal Code Signing', str(keychain)], capture_output=True)
+    certificate = subprocess.run(['/usr/bin/security', 'find-certificate', '-c', 'Giles Personal Code Signing', str(keychain)], capture_output=True, check=False)
     if certificate.returncode:
         run('/usr/bin/security', 'import', str(folder/'giles.p12'), '-k', str(keychain), '-P', data['password'], '-T', '/usr/bin/codesign', '-T', '/usr/bin/security')
     run('/usr/bin/security', 'set-key-partition-list', '-S', 'apple-tool:,apple:,codesign:', '-s', '-k', data['keychainPassword'], str(keychain))
+    if os.environ.get('GITHUB_ACTIONS') == 'true':
+        run('sudo', '/usr/bin/security', 'add-trusted-cert', '-d', '-r', 'trustRoot', '-p', 'codeSign', '-k', str(keychain), str(folder/'certificate.pem'))
     fingerprint = subprocess.check_output(['/usr/bin/openssl','x509','-in',str(folder/'certificate.pem'),'-noout','-fingerprint','-sha1'],text=True).strip().split('=')[1].replace(':','')
     environment = {'GILES_SIGNING_KEYCHAIN':str(keychain), 'GILES_SIGNING_FINGERPRINT':fingerprint}
     (folder/'environment.json').write_text(json.dumps(environment))
@@ -54,7 +56,7 @@ def main():
         if p.is_file():os.chmod(p,0o600)
     if os.environ.get('GITHUB_ENV'):
         with open(os.environ['GITHUB_ENV'],'a') as output:
-            for k,v in environment.items():output.write(f'{k}={v}\n')
+            output.writelines(f'{k}={v}\n' for k,v in environment.items())
     if args.github:
         for name,value in {'GILES_CERTIFICATE_P12':base64.b64encode((folder/'giles.p12').read_bytes()).decode(),'GILES_CERTIFICATE_PASSWORD':data['password']}.items():
             subprocess.run(['gh','secret','set',name,'--repo','davyburgevin/giles'],input=value,text=True,check=True,stdout=subprocess.DEVNULL)

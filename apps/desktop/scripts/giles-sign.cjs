@@ -6,15 +6,17 @@ const fs = require('node:fs')
 const path = require('node:path')
 const { pathToFileURL } = require('node:url')
 
+/** @param {{ app: string }} options */
 module.exports = async function signGiles(options) {
-  const keychain = process.env.GILES_SIGNING_KEYCHAIN
-  const fingerprint = process.env.GILES_SIGNING_FINGERPRINT
+  const keychain = process.env.GILES_SIGNING_KEYCHAIN || ''
+  const fingerprint = process.env.GILES_SIGNING_FINGERPRINT || ''
   if (!keychain || !/^[A-Fa-f0-9]{40}$/.test(fingerprint || '')) {
     throw new Error('Giles requires its persistent self-signed certificate and fingerprint')
   }
   const app = options.app
   const entitlements = path.resolve(__dirname, '../electron/entitlements.mac.plist')
   const inherit = path.resolve(__dirname, '../electron/entitlements.mac.inherit.plist')
+  /** @param {string} file @param {boolean} [outer] */
   const sign = (file, outer = false) => {
     const args = ['--force', '--sign', fingerprint, '--keychain', keychain,
       '--timestamp=none', '--options', 'runtime', '--entitlements', outer ? entitlements : inherit]
@@ -22,6 +24,7 @@ module.exports = async function signGiles(options) {
     execFileSync('/usr/bin/codesign', [...args, file], { stdio: 'inherit' })
   }
   const magics = new Set([0xfeedface, 0xcefaedfe, 0xfeedfacf, 0xcffaedfe, 0xcafebabe, 0xbebafeca])
+  /** @param {string} directory */
   const visit = directory => {
     for (const item of fs.readdirSync(directory, { withFileTypes: true })) {
       const file = path.join(directory, item.name)

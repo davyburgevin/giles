@@ -133,6 +133,11 @@ export function stageDesktopLaunchers(root, identity = productIdentity) {
       copyFileSync(join(root, source), join(root, destination))
     }
     if (!existsSync(join(root, destination))) throw new Error(`Missing desktop launcher: ${destination}`)
+    if (!windows && source !== destination) {
+      const launcher = readFileSync(join(root, destination), 'utf8')
+      writeFileSync(join(root, destination), launcher.replace('unset PYTHONPATH PYTHONHOME',
+        'unset PYTHONPATH PYTHONHOME\nexport HERMES_HOME="${HERMES_HOME:-${GILES_HOME:-$HOME/.giles}}"'))
+    }
     commands[name] = destination
     launchers.push(alias)
   }

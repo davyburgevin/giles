@@ -17,7 +17,7 @@ module.exports = {
   files: ['dist/**', 'assets/**', 'public/**', 'package.json'],
   beforeBuild: async () => false,
   beforePack: 'scripts/before-pack.mjs',
-  afterPack: 'scripts/after-pack.mjs',
+  afterPack: 'scripts/giles-after-pack.mjs',
   extraResources: [
     { from: 'build/install-stamp.json', to: 'install-stamp.json' },
     { from: 'build/agent-payload', to: 'agent-payload' }
@@ -26,7 +26,7 @@ module.exports = {
   mac: {
     icon: 'assets/icon.icns',
     notarize: false,
-    sign: require('./scripts/giles-sign.cjs'),
+    sign: null,
     publish: [{ provider: 'github', owner: 'davyburgevin', repo: 'giles', channel: 'latest' }],
     category: 'public.app-category.developer-tools',
     target: [{ target: 'dmg', arch: ['arm64'] }, { target: 'zip', arch: ['arm64'] }],
