@@ -9,4 +9,5 @@ assert product['repository'] == 'davyburgevin/giles'
 assert product['appId'] == 'fr.davyburgevin.giles'
 assert product['platform'] == 'darwin' and product['arch'] == 'arm64'
 assert json.loads((ROOT / 'apps/desktop/package.json').read_text(encoding='utf-8-sig'))['version'] == product['version']
+assert not (ROOT / 'UPSTREAM_CONFLICTS.txt').exists(), 'Resolve the recorded upstream conflicts before merging'
 print('Giles product inputs verified.')
