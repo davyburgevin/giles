@@ -38,10 +38,12 @@ jobs:
       - name: Build complete Giles app
         env:
           GH_TOKEN: ${{ github.token }}
+          ELECTRON_BUILDER_COMPRESSION_LEVEL: '5'
         run: python3 scripts/giles/build.py
       - name: Verify packaged application
         run: python3 scripts/giles/verify.py apps/desktop/release/mac-arm64/Giles.app
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
         with:
           name: Giles-macOS-arm64
           path: |
