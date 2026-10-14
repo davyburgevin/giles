@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict'
 import { createRequire } from 'node:module'
-import path from 'node:path'
 import test from 'node:test'
 import { platformDefaultHermesHome, resolveDesktopHermesHome } from '../../apps/desktop/electron/data-paths.mjs'
 const require = createRequire(import.meta.url)

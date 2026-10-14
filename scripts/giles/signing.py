@@ -5,6 +5,7 @@ import base64
 import json
 import os
 import secrets
+import shlex
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -49,6 +50,11 @@ def main():
     run('/usr/bin/security', 'set-key-partition-list', '-S', 'apple-tool:,apple:,codesign:', '-s', '-k', data['keychainPassword'], str(keychain))
     if os.environ.get('GITHUB_ACTIONS') == 'true':
         run('sudo', '/usr/bin/security', 'add-trusted-cert', '-d', '-r', 'trustRoot', '-p', 'codeSign', '-k', str(keychain), str(folder/'certificate.pem'))
+    else:
+        run('/usr/bin/security', 'add-trusted-cert', '-r', 'trustRoot', '-p', 'codeSign', '-k', str(keychain), str(folder/'certificate.pem'))
+    current = shlex.split(subprocess.check_output(['/usr/bin/security', 'list-keychains', '-d', 'user'], text=True))
+    if str(keychain) not in current:
+        run('/usr/bin/security', 'list-keychains', '-d', 'user', '-s', *current, str(keychain))
     fingerprint = subprocess.check_output(['/usr/bin/openssl','x509','-in',str(folder/'certificate.pem'),'-noout','-fingerprint','-sha1'],text=True).strip().split('=')[1].replace(':','')
     environment = {'GILES_SIGNING_KEYCHAIN':str(keychain), 'GILES_SIGNING_FINGERPRINT':fingerprint}
     (folder/'environment.json').write_text(json.dumps(environment))

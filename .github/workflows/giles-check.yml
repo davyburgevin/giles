@@ -13,3 +13,12 @@ jobs:
       - run: python3 scripts/giles/check.py
       - run: node --test scripts/giles/contracts.test.mjs
       - run: bash -n scripts/giles/sync-upstream.sh
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: '26.7.0'
+      - name: Prepare locked desktop dependencies
+        run: node scripts/build/node-deps.mjs --source "$GITHUB_WORKSPACE" --workspace apps/desktop --reuse
+      - name: Check desktop types and behavior
+        run: |
+          npm run typecheck --workspace apps/desktop
+          npm exec --workspace apps/desktop -- vitest run electron/product-identity.test.ts electron/data-paths.test.ts electron/updater/mac.test.ts electron/updater/mac-client.test.ts
