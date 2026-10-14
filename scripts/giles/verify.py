@@ -22,4 +22,37 @@ assert 'davyburgevin' in feed and 'giles' in feed and 'NousResearch' not in feed
 payload = resources/'agent-payload'
 manifest = json.loads((payload/'manifest.json').read_text())
 print('Packaged identity, signature, Apple Silicon and Giles update feed verified.')
-print('Payload manifest verified:', manifest.get('schemaVersion', 'present'))
+assert manifest['target'] == 'darwin-arm64'
+runtime = manifest['runtime']
+launcher = payload / runtime['commands']['hermes']
+assert launcher.name == 'giles'
+with tempfile.TemporaryDirectory(prefix='giles-smoke-') as folder:
+    environment = dict(os.environ, HERMES_HOME=folder, HERMES_RUNTIME_DIR=str(Path(folder)/'tools'),
+                       HERMES_DESKTOP='1', HERMES_SERVE_HEADLESS='1')
+    result = subprocess.run([str(launcher), '--help'], env=environment, capture_output=True, text=True, timeout=60)
+    assert result.returncode == 0, result.stderr
+    assert 'serve' in result.stdout
+    log = Path(folder)/'backend.log'
+    with log.open('w') as output:
+        process = subprocess.Popen([str(launcher), 'serve', '--port', '0'], env=environment, stdout=output, stderr=output)
+        try:
+            import re
+            import time
+            import urllib.request
+            deadline = time.monotonic() + 60
+            match = None
+            while time.monotonic() < deadline and process.poll() is None:
+                match = re.search(r'HERMES_BACKEND_READY port=(\d+)', log.read_text())
+                if match:
+                    break
+                time.sleep(0.25)
+            assert match, log.read_text()
+            print('Original Python backend started successfully on an isolated ephemeral port.')
+        finally:
+            process.terminate()
+            try:
+                process.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait()
+print('Packaged Python launcher and native backend startup verified.')
