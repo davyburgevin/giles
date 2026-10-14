@@ -1,7 +1,6 @@
 // Giles packages only the native Apple Silicon app and the upstream Python payload.
 // @ts-check
 'use strict'
-const path = require('node:path')
 const { displayName, appId, appNamePascal } = require('./product-identity.cjs')
 /** @satisfies {import('app-builder-lib').Configuration} */
 module.exports = {
