@@ -36,6 +36,8 @@ jobs:
       - name: Verify personal update signature compatibility
         run: node scripts/giles/signing-acceptance.mjs
       - name: Build complete Giles app
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: python3 scripts/giles/build.py
       - name: Verify packaged application
         run: python3 scripts/giles/verify.py apps/desktop/release/mac-arm64/Giles.app
