@@ -133,6 +133,11 @@ export function stageDesktopLaunchers(root, identity = productIdentity) {
       copyFileSync(join(root, source), join(root, destination))
     }
     if (!existsSync(join(root, destination))) throw new Error(`Missing desktop launcher: ${destination}`)
+    if (!windows && source !== destination) {
+      const launcher = readFileSync(join(root, destination), 'utf8')
+      writeFileSync(join(root, destination), launcher.replace('unset PYTHONPATH PYTHONHOME',
+        'unset PYTHONPATH PYTHONHOME\nexport HERMES_HOME="${HERMES_HOME:-${GILES_HOME:-$HOME/.giles}}"'))
+    }
     commands[name] = destination
     launchers.push(alias)
   }
@@ -230,7 +235,7 @@ export function buildStampPayload(stamp, env = process.env, platform = process.p
     branch: commitBuild || channelBuild ? null : stamp.branch,
     builtAt: new Date().toISOString(),
     dirty: stamp.dirty,
-    source: channelBuild ? 'channel-build' : commitBuild ? 'commit-build' : stamp.source,
+    source: channelBuild ? 'channel-build' : commitBuild ? 'ci' : stamp.source,
     commitDate: stamp.commitDate ?? null,
     baseVersion: channelBuild?.sourceVersion ?? stamp.baseVersion ?? version?.split('-')[0] ?? null,
     displayVersion: channelBuild
@@ -266,7 +271,7 @@ export function buildStampPayload(stamp, env = process.env, platform = process.p
     payload: variant === "store" ? "bundled" : variant || "bootstrap",
     distribution: "desktop-app",
 
-    updateMechanism: commitBuild ? 'external' : updateMechanism,
+    updateMechanism,
     tag: channelBuild?.receiverCandidate ? channelBuild.releaseTag : env.HERMES_PAYLOAD_TAG || null,
     ...(bundleEnv ? { bundleEnv } : {}),
     ...(bundled ? { runtime: payload.runtime } : {})

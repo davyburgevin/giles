@@ -1,0 +1,9 @@
+{
+  "name": "Giles",
+  "version": "0.1.0",
+  "repository": "davyburgevin/giles",
+  "appId": "fr.davyburgevin.giles",
+  "upstream": "NousResearch/hermes-agent",
+  "platform": "darwin",
+  "arch": "arm64"
+}

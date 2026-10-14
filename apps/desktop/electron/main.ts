@@ -648,7 +648,6 @@ import { verifyPreparedChannelInstaller } from './updater/channel-windows-host'
 import { type CheckoutStrategy, createCheckoutStrategy } from './updater/checkout'
 import { readSourceUpdate, sourceChannelName, type SourceUpdate } from './updater/checkout-source'
 import { ExternalStrategy } from './updater/external'
-import { readUpdatesFeedBaseFromConfig, resolveFeedBaseUrl } from './updater/feed-config'
 import { createChannelMacStrategy, createMacStrategy } from './updater/mac-client'
 import { UpdateOperation } from './updater/operation'
 import {
@@ -3981,7 +3980,7 @@ function resolveCheckoutUpdateStrategy(): CheckoutStrategy {
  * source.
  */
 function resolveDesktopFeedBaseUrl(): string {
-  return resolveFeedBaseUrl(readUpdatesFeedBaseFromConfig(path.join(HERMES_HOME, 'config.yaml')))
+  return '' // Giles updates use only the baked GitHub repository.
 }
 
 /** The updater channel from the baked install stamp ('canary' vs 'stable'). */
@@ -19082,7 +19081,7 @@ ipcMain.handle('hermes:vscode-theme:search', async (_event, query) => searchMark
 // ---------------------------------------------------------------------------
 const HERMES_PROTOCOL = DEV_SERVER ? 'hermes-dev' : 'hermes'
 /** Schemes accepted when parsing inbound URLs (dev accepts both). */
-const DEEPLINK_SCHEMES = DEV_SERVER ? ['hermes-dev', 'hermes'] : ['hermes']
+const DEEPLINK_SCHEMES = DEV_SERVER ? ['giles-dev', 'giles'] : ['giles']
 let _pendingDeepLink = null
 let _rendererReadyForDeepLink = false
 // Set by sendOpenUpdatesRequested() when the renderer cannot hear it yet.

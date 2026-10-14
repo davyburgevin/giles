@@ -108,6 +108,8 @@ def _build_prepared(prepared, builder_args: list[str], variant: str | None) -> N
     icons = products / "icons"
     run([str(prepared.icon_python), "-I", str(repo / "scripts/generate_icons.py"),
          "--source", str(repo), "--out", str(icons)], cwd=repo, env=env)
+    run([str(prepared.icon_python), str(repo / "scripts/giles/icons.py"),
+         "--out", str(icons)], cwd=repo, env=env)
     if variant != "light":
         run([node, "scripts/build/tui.mjs", "--source", str(repo), "--out", str(products / "tui")], cwd=repo, env=env)
         run([node, "scripts/build/web.mjs", "--source", str(repo), "--icons", str(products / "icons"),
