@@ -13,7 +13,7 @@ sys.path.insert(0, str(ROOT))
 def main() -> None:
     if sys.platform != 'darwin' or platform.machine() != 'arm64':
         raise SystemExit('Giles requires a native macOS Apple Silicon builder.')
-    product = json.loads((ROOT / 'giles.json').read_text(encoding='utf-8'))
+    product = json.loads((ROOT / 'giles.json').read_text(encoding='utf-8-sig'))
     if not os.environ.get('GILES_SIGNING_KEYCHAIN'):
         raise SystemExit('A Giles signing keychain is required.')
     from scripts.bundles.desktop import build_prepared

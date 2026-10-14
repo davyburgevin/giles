@@ -35,7 +35,7 @@ def main():
         (folder / 'giles.p12').write_bytes(base64.b64decode(os.environ['GILES_CERTIFICATE_P12']))
         credentials.write_text(json.dumps({'password': os.environ['GILES_CERTIFICATE_PASSWORD'], 'keychainPassword': secrets.token_urlsafe(32)}), encoding='utf-8')
         run('/usr/bin/openssl', 'pkcs12', '-in', str(folder / 'giles.p12'), '-clcerts', '-nokeys', '-passin', 'pass:' + os.environ['GILES_CERTIFICATE_PASSWORD'], '-out', str(folder / 'certificate.pem'))
-    data = json.loads(credentials.read_text(encoding='utf-8'))
+    data = json.loads(credentials.read_text(encoding='utf-8-sig'))
     keychain = folder / 'giles.keychain-db'
     if not keychain.exists():
         run('/usr/bin/security', 'create-keychain', '-p', data['keychainPassword'], str(keychain))

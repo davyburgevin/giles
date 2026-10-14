@@ -16,10 +16,10 @@ subprocess.run(['codesign', '--verify', '--deep', '--strict', str(app)], check=T
 arch = subprocess.check_output(['lipo', '-archs', str(app / 'Contents/MacOS/Giles')], text=True, timeout=120, encoding='utf-8').strip()
 assert arch == 'arm64', arch
 resources = app / 'Contents/Resources'
-feed = (resources / 'app-update.yml').read_text(encoding='utf-8')
+feed = (resources / 'app-update.yml').read_text(encoding='utf-8-sig')
 assert 'davyburgevin' in feed and 'giles' in feed and ('NousResearch' not in feed)
 payload = resources / 'agent-payload'
-manifest = json.loads((payload / 'manifest.json').read_text(encoding='utf-8'))
+manifest = json.loads((payload / 'manifest.json').read_text(encoding='utf-8-sig'))
 print('Packaged identity, signature, Apple Silicon and Giles update feed verified.')
 assert manifest['target'] == 'darwin-arm64'
 runtime = manifest['runtime']
@@ -39,11 +39,11 @@ with tempfile.TemporaryDirectory(prefix='giles-smoke-') as folder:
             deadline = time.monotonic() + 60
             match = None
             while time.monotonic() < deadline and process.poll() is None:
-                match = re.search('HERMES_BACKEND_READY port=(\\d+)', log.read_text(encoding='utf-8'))
+                match = re.search('HERMES_BACKEND_READY port=(\\d+)', log.read_text(encoding='utf-8-sig'))
                 if match:
                     break
                 time.sleep(0.25)
-            assert match, log.read_text(encoding='utf-8')
+            assert match, log.read_text(encoding='utf-8-sig')
             print('Original Python backend started successfully on an isolated ephemeral port.')
         finally:
             process.terminate()
