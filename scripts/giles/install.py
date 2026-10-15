@@ -17,7 +17,7 @@ from urllib.request import Request, urlopen
 REPOSITORY = 'davyburgevin/giles'
 IDENTIFIER = 'fr.davyburgevin.giles'
 SIGNER = 'c685007d658457012d8332b0edee6eeb9755ce6a'
-REQUIREMENT = f'identifier "{IDENTIFIER}" and anchor = H"{SIGNER}"'
+REQUIREMENT = f'=identifier "{IDENTIFIER}" and anchor = H"{SIGNER}"'
 
 
 def release_asset() -> tuple[dict, dict]:
@@ -102,7 +102,7 @@ def main() -> None:
     binary_dir = args.bin_dir.expanduser().resolve()
     destination = applications / 'Giles.app'
     launcher = binary_dir / 'giles'
-    if launcher.exists() and 'Giles desktop launcher' not in launcher.read_text(encoding='utf-8'):
+    if launcher.exists() and 'Giles desktop launcher' not in launcher.read_text(encoding='utf-8-sig'):
         raise SystemExit(f'Refusing to replace an existing command: {launcher}')
     applications.mkdir(parents=True, exist_ok=True)
     binary_dir.mkdir(parents=True, exist_ok=True)
