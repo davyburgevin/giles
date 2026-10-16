@@ -1,0 +1,11 @@
+apps/desktop/src/i18n/ar_update_channel.ts
+apps/desktop/src/i18n/de_update_channel.ts
+apps/desktop/src/i18n/en_update_channel.ts
+apps/desktop/src/i18n/es_update_channel.ts
+apps/desktop/src/i18n/fr_update_channel.ts
+apps/desktop/src/i18n/ja.ts
+apps/desktop/src/i18n/ja_update_channel.ts
+apps/desktop/src/i18n/ru.ts
+apps/desktop/src/i18n/ru_update_channel.ts
+apps/desktop/src/i18n/zh-hant_update_channel.ts
+apps/desktop/src/i18n/zh_update_channel.ts
